@@ -1,0 +1,61 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    container_name: dj-mariadb
+    restart: unless-stopped
+    networks:
+      - dj-net
+    env_file:
+      - ./env.example
+    environment:
+      MYSQL_DATABASE: domjudge
+      MYSQL_USER: domjudge
+    volumes:
+      - /mnt/domjudge/domjudge-live/mariadb:/var/lib/mysql
+
+  domserver:
+    image: domjudge/domserver:latest
+    container_name: dj-domserver
+    restart: unless-stopped
+    depends_on:
+      - mariadb
+    networks:
+      - dj-net
+    ports:
+      - "127.0.0.1:12345:80"
+    env_file:
+      - ./env.example
+    environment:
+      CONTAINER_TIMEZONE: Asia/Singapore
+      MYSQL_HOST: dj-mariadb
+      MYSQL_DATABASE: domjudge
+      MYSQL_USER: domjudge
+      DJ_DB_INSTALL_BARE: "0"
+    volumes:
+      - /mnt/domjudge/domjudge-live/domserver:/opt/domjudge/domserver
+
+  judgehost:
+    image: domjudge/judgehost:latest
+    container_name: dj-judgehost-0
+    restart: unless-stopped
+    privileged: true
+    depends_on:
+      - domserver
+    networks:
+      - dj-net
+    env_file:
+      - ./env.example
+    environment:
+      CONTAINER_TIMEZONE: Asia/Singapore
+      DOMSERVER_BASEURL: http://dj-domserver/
+      JUDGEDAEMON_USERNAME: judgehost
+      DAEMON_ID: "0"
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - /mnt/domjudge/domjudge-live/judgehost/judgings:/opt/domjudge/judgehost/judgings
+      - /mnt/domjudge/domjudge-live/judgehost/log:/opt/domjudge/judgehost/log
+      - /mnt/domjudge/domjudge-live/judgehost/tmp:/opt/domjudge/judgehost/tmp
+
+networks:
+  dj-net:
+    name: dj-net

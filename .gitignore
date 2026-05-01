@@ -1,0 +1,44 @@
+# Secrets and credentials
+*.secret
+*.pem
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+.env
+.env.*
+.my.cnf
+credentials*.ini
+
+# Live DOMjudge data
+mariadb/
+secrets/
+sessions/
+judgings/
+submissions/
+*.sql
+*.sql.gz
+*.dump
+*.db
+*.sqlite
+
+# Logs and caches
+*.log
+logs/
+log/
+cache/
+tmp/
+temp/
+
+# Dependencies/build artifacts
+node_modules/
+vendor/
+var/cache/
+var/log/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
