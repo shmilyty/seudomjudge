@@ -38,9 +38,15 @@
         }
 
         var previousKeys = toKeySet(previous || []);
+        var currentKeys = {};
         var newlySolved = [];
         for (var i = 0; i < current.length; i++) {
-            if (!previousKeys[entryKey(current[i])]) {
+            var key = entryKey(current[i]);
+            if (currentKeys[key]) {
+                continue;
+            }
+            currentKeys[key] = true;
+            if (!previousKeys[key]) {
                 newlySolved.push(current[i]);
             }
         }
@@ -410,5 +416,6 @@
         getToastAutoDismissDelay: getToastAutoDismissDelay,
         extractFirstSolves: extractFirstSolves,
         snapshotRows: snapshotRows,
+        showToast: showToast,
     };
 });
