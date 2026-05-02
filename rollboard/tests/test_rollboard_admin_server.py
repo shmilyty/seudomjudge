@@ -9,7 +9,7 @@ class RollboardAdminServerTest(unittest.TestCase):
     def test_make_rollboard_url_uses_protected_data_path(self):
         self.assertEqual(
             rollboard_admin_server.make_rollboard_url("demo"),
-            "/rollboard/?component=resolver&data-source=/rollboard/data/demo",
+            "/rollboard/resolver?data-source=/rollboard/data/demo",
         )
 
     def test_resolve_output_slug_defaults_to_contest_id(self):
@@ -34,9 +34,9 @@ class RollboardAdminServerTest(unittest.TestCase):
                         "end_time": "2026-05-02T17:00:00+08:00",
                     },
                     output_dir,
-                )
+            )
             self.assertTrue(summary["generated"])
-            self.assertEqual(summary["rollboard_url"], "/rollboard/?component=resolver&data-source=/rollboard/data/demo")
+            self.assertEqual(summary["rollboard_url"], "/rollboard/resolver?data-source=/rollboard/data/demo")
 
 
 if __name__ == "__main__":

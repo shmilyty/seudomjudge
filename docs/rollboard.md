@@ -46,8 +46,13 @@ rebuilding a host.
 5. The admin page opens:
 
 ```text
-/rollboard/?component=resolver&data-source=/rollboard/data/<contest-id>
+/rollboard/resolver?data-source=/rollboard/data/<contest-id>
 ```
+
+The XCPCIO static dist is served from `/rollboard/`, so `index.html` and
+`404.html` must be patched with `window.BASE_URL="/rollboard/"` and
+`window.DATA_HOST="/"`. Run `rollboard/tools/patch_xcpcio_dist.py` after
+refreshing the third-party dist.
 
 ## Safety
 

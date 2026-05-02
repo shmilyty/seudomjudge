@@ -50,7 +50,7 @@ class Settings:
 
 
 def make_rollboard_url(slug: str) -> str:
-    return f"/rollboard/?component=resolver&data-source=/rollboard/data/{safe_slug(slug)}"
+    return f"/rollboard/resolver?data-source=/rollboard/data/{safe_slug(slug)}"
 
 
 def resolve_output_slug(contest_id: str, output: Optional[str]) -> str:
