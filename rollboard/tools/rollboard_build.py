@@ -68,7 +68,8 @@ def convert_domjudge_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
     submissions = payload.get("submissions", [])
     judgements = payload.get("judgements", [])
 
-    visible_problem_ids = {str(problem.get("id")) for problem in problems if problem.get("id") not in (None, "")}
+    problem_aliases = build_problem_aliases(problems)
+    visible_problem_ids = {problem_public_id(problem) for problem in problems if problem_public_id(problem)}
     visible_team_ids = {
         str(team.get("id"))
         for team in teams
@@ -78,7 +79,7 @@ def convert_domjudge_payload(payload: Mapping[str, Any]) -> Dict[str, Any]:
     board_data = {
         "contest": build_contest(contest, problems, organizations),
         "teams": build_teams(teams, groups),
-        "submissions": build_submissions(submissions, judgements, visible_team_ids, visible_problem_ids, contest),
+        "submissions": build_submissions(submissions, judgements, visible_team_ids, visible_problem_ids, contest, problem_aliases),
     }
     return board_data
 
@@ -116,7 +117,7 @@ def build_contest(contest: Mapping[str, Any], problems: Iterable[Mapping[str, An
 
 def convert_problem(problem: Mapping[str, Any]) -> Dict[str, Any]:
     result = {
-        "id": str(problem.get("id")),
+        "id": problem_public_id(problem),
         "label": str(problem.get("label") or problem.get("short_name") or problem.get("id")),
     }
     if problem.get("name"):
@@ -125,6 +126,27 @@ def convert_problem(problem: Mapping[str, Any]) -> Dict[str, Any]:
     if color:
         result["balloon_color"] = {"background_color": color}
     return result
+
+
+def problem_public_id(problem: Mapping[str, Any]) -> str:
+    for key in ("id", "label", "short_name", "probid"):
+        value = problem.get(key)
+        if value not in (None, ""):
+            return str(value)
+    return ""
+
+
+def build_problem_aliases(problems: Iterable[Mapping[str, Any]]) -> Dict[str, str]:
+    aliases = {}
+    for problem in problems:
+        public_id = problem_public_id(problem)
+        if not public_id:
+            continue
+        for key in ("id", "label", "short_name", "probid"):
+            value = problem.get(key)
+            if value is not None:
+                aliases[str(value)] = public_id
+    return aliases
 
 
 def convert_organization(org: Mapping[str, Any]) -> Dict[str, Any]:
@@ -179,6 +201,7 @@ def build_submissions(
     visible_team_ids: set[str],
     visible_problem_ids: set[str],
     contest: Mapping[str, Any],
+    problem_aliases: Mapping[str, str],
 ) -> List[Dict[str, Any]]:
     judgement_by_submission = latest_valid_judgements(judgements)
     contest_duration = parse_domjudge_duration(contest.get("duration"))
@@ -187,7 +210,8 @@ def build_submissions(
     for submission in submissions:
         submission_id = str(submission.get("id", ""))
         team_id = str(submission.get("team_id", ""))
-        problem_id = str(submission.get("problem_id", ""))
+        raw_problem_id = str(submission.get("problem_id", ""))
+        problem_id = problem_aliases.get(raw_problem_id, raw_problem_id)
         if not submission_id or team_id not in visible_team_ids or problem_id not in visible_problem_ids:
             continue
 

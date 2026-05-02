@@ -76,6 +76,34 @@ class RollboardBuildTest(unittest.TestCase):
             self.assertEqual(json.loads((output_dir / "team.json").read_text())[0]["id"], "t1")
             self.assertEqual(json.loads((output_dir / "run.json").read_text())[0]["status"], "correct")
 
+    def test_problem_with_empty_domjudge_id_uses_label(self):
+        payload = sample_domjudge_payload()
+        payload["problems"].append({
+            "id": "",
+            "label": "hello",
+            "short_name": "hello",
+            "name": "Hello World",
+            "ordinal": 2,
+            "rgb": "#ff00ff",
+        })
+        payload["submissions"].append({
+            "id": "s7",
+            "team_id": "t1",
+            "problem_id": "",
+            "contest_time": "4:50:00.000",
+        })
+        payload["judgements"].append({
+            "id": "j7",
+            "submission_id": "s7",
+            "judgement_type_id": "AC",
+            "valid": True,
+        })
+
+        data = rollboard_build.convert_domjudge_payload(payload)
+
+        self.assertIn({"id": "hello", "label": "hello", "name": "Hello World", "balloon_color": {"background_color": "#ff00ff"}}, data["contest"]["problems"])
+        self.assertIn({"id": "s7", "team_id": "t1", "problem_id": "hello", "timestamp": 17400, "status": "correct"}, data["submissions"])
+
 
 def sample_domjudge_payload():
     return {
