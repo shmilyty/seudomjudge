@@ -19,6 +19,8 @@ domserver container on localhost port `12345`. The current DOMjudge version is
 - Sanitized nginx virtual host configuration.
 - Example Docker Compose and environment templates.
 - Deployment notes that describe paths, containers, ports, and DNS.
+- Rollboard helper code, nginx snippets, and systemd templates for the
+  protected XCPCIO resolver page.
 - Maintenance instructions for future agents.
 
 ## What Is Not Included
@@ -51,6 +53,18 @@ Judgehost:
 
 ```text
 dj-judgehost-0 -> http://dj-domserver/api/v4
+```
+
+Rollboard:
+
+```text
+Admin browser
+  -> https://domjudge.seucpc.com/rollboard/admin/
+  -> nginx Basic Auth
+  -> http://127.0.0.1:18090/api/
+  -> rollboard-admin.service
+  -> DOMjudge API http://127.0.0.1:12345/api/v4
+  -> generated XCPCIO data under /mnt/domjudge/rollboard/www/data/
 ```
 
 ## Safe Restore Outline

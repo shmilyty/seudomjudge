@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEU Rollboard Admin</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --panel: #ffffff;
+      --ink: #1f2937;
+      --muted: #697386;
+      --line: #d7dde8;
+      --brand: #1463ff;
+      --brand-dark: #0d47c9;
+      --danger: #b42318;
+      --ok: #067647;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main {
+      width: min(960px, calc(100vw - 32px));
+      margin: 32px auto;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    .muted { color: var(--muted); }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(16, 24, 40, .06);
+    }
+    .toolbar {
+      display: grid;
+      grid-template-columns: minmax(240px, 1fr) auto auto;
+      gap: 12px;
+      align-items: end;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+    select, input {
+      width: 100%;
+      height: 40px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+    }
+    button, a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--brand);
+      border-radius: 6px;
+      background: var(--brand);
+      color: white;
+      font: inherit;
+      font-weight: 650;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.secondary, a.button.secondary {
+      background: white;
+      color: var(--brand);
+    }
+    button:disabled, a.button.is-disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+    button:not(:disabled):hover, a.button:not(.is-disabled):hover {
+      background: var(--brand-dark);
+      border-color: var(--brand-dark);
+      color: white;
+    }
+    .status {
+      min-height: 24px;
+      margin-top: 14px;
+      font-size: 14px;
+    }
+    .status.ok { color: var(--ok); }
+    .status.error { color: var(--danger); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    @media (max-width: 720px) {
+      header { display: block; }
+      .toolbar { grid-template-columns: 1fr; }
+      .actions { justify-content: flex-start; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>滚榜管理</h1>
+      <div class="muted">SEU DOMjudge Rollboard</div>
+    </div>
+    <a class="button secondary" href="/jury" target="_top">返回 DOMjudge</a>
+  </header>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div>
+        <label for="contest">比赛</label>
+        <select id="contest"></select>
+      </div>
+      <button id="build" type="button">生成滚榜数据</button>
+      <a id="open" class="button is-disabled" href="#" target="_blank" rel="noopener">打开滚榜</a>
+    </div>
+    <div id="status" class="status muted">正在加载比赛列表...</div>
+
+    <table>
+      <thead>
+      <tr>
+        <th>比赛</th>
+        <th>开始</th>
+        <th>结束</th>
+        <th>数据</th>
+        <th></th>
+      </tr>
+      </thead>
+      <tbody id="contest-rows"></tbody>
+    </table>
+  </section>
+</main>
+
+<script>
+  const contestSelect = document.getElementById('contest');
+  const buildButton = document.getElementById('build');
+  const openButton = document.getElementById('open');
+  const statusNode = document.getElementById('status');
+  const rowsNode = document.getElementById('contest-rows');
+  let contests = [];
+
+  function setStatus(text, kind = 'muted') {
+    statusNode.textContent = text;
+    statusNode.className = `status ${kind}`;
+  }
+
+  function setOpenUrl(url) {
+    if (!url) {
+      openButton.href = '#';
+      openButton.classList.add('is-disabled');
+      return;
+    }
+    openButton.href = url;
+    openButton.classList.remove('is-disabled');
+  }
+
+  async function api(path, options = {}) {
+    const response = await fetch(`/rollboard/api/${path}`, {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+    const data = await response.json();
+    if (!response.ok || data.error) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    return data;
+  }
+
+  function render() {
+    const requestedContest = new URLSearchParams(location.search).get('contest');
+    contestSelect.innerHTML = contests.map((contest) => {
+      const label = `${contest.shortname || contest.id} - ${contest.name || contest.id}`;
+      return `<option value="${escapeHtml(contest.id)}">${escapeHtml(label)}</option>`;
+    }).join('');
+    if (requestedContest && contests.some((contest) => contest.id === requestedContest)) {
+      contestSelect.value = requestedContest;
+    }
+    rowsNode.innerHTML = contests.map((contest) => `
+      <tr>
+        <td>${escapeHtml(contest.shortname || contest.id)}<br><span class="muted">${escapeHtml(contest.name || '')}</span></td>
+        <td>${formatDate(contest.start_time)}</td>
+        <td>${formatDate(contest.end_time)}</td>
+        <td>${contest.generated ? '<span class="status ok">已生成</span>' : '<span class="muted">未生成</span>'}</td>
+        <td class="actions">
+          <button class="secondary" type="button" data-build="${escapeHtml(contest.id)}">生成</button>
+          <a class="button secondary ${contest.generated ? '' : 'is-disabled'}" href="${contest.generated ? escapeHtml(contest.rollboard_url) : '#'}" target="_blank" rel="noopener">打开</a>
+        </td>
+      </tr>
+    `).join('');
+    updateSelectedContest();
+  }
+
+  function updateSelectedContest() {
+    const contest = contests.find((item) => item.id === contestSelect.value);
+    setOpenUrl(contest && contest.generated ? contest.rollboard_url : '');
+  }
+
+  async function loadContests() {
+    const data = await api('contests');
+    contests = data.contests || [];
+    render();
+    setStatus(`已加载 ${contests.length} 场比赛。`);
+  }
+
+  async function buildContest(contestId) {
+    buildButton.disabled = true;
+    setStatus('正在生成滚榜数据...');
+    try {
+      const data = await api('build', {
+        method: 'POST',
+        body: JSON.stringify({ contest_id: contestId }),
+      });
+      setStatus(`生成完成：${data.build.problems} 题，${data.build.teams} 队，${data.build.submissions} 条提交。`, 'ok');
+      setOpenUrl(data.rollboard_url);
+      await loadContests();
+      setOpenUrl(data.rollboard_url);
+    } catch (error) {
+      setStatus(error.message, 'error');
+    } finally {
+      buildButton.disabled = false;
+    }
+  }
+
+  function formatDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('zh-CN', { hour12: false });
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[ch]));
+  }
+
+  contestSelect.addEventListener('change', updateSelectedContest);
+  buildButton.addEventListener('click', () => buildContest(contestSelect.value));
+  rowsNode.addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-build]');
+    if (button) {
+      contestSelect.value = button.getAttribute('data-build');
+      buildContest(contestSelect.value);
+    }
+  });
+  openButton.addEventListener('click', (event) => {
+    if (openButton.classList.contains('is-disabled')) {
+      event.preventDefault();
+    }
+  });
+
+  loadContests().catch((error) => setStatus(error.message, 'error'));
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+[Unit]
+Description=SEU DOMjudge Rollboard Admin API
+After=network.target docker.service
+
+[Service]
+Type=simple
+User=seucpc
+Group=seucpc
+WorkingDirectory=/mnt/domjudge/rollboard
+EnvironmentFile=/mnt/domjudge/rollboard/secrets/rollboard-admin.env
+ExecStart=/usr/bin/python3 -m rollboard.service.rollboard_admin_server
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
