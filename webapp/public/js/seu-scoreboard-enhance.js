@@ -10,10 +10,11 @@
 
     var DEFAULT_STORAGE_KEY = 'seu-scoreboard-first-solves';
     var STORAGE_VERSION = 1;
-    var TOAST_LIFETIME_MS = 9000;
+    var TOAST_LIFETIME_MS = 30000;
     var previousRows = null;
     var initialized = false;
     var state = null;
+    var notificationPromptBound = false;
 
     function normalizeText(value) {
         return String(value || '').replace(/\s+/g, ' ').trim();
@@ -204,10 +205,12 @@
             '@keyframes seuScoreboardPulse{0%{box-shadow:inset 0 0 0 9999px rgba(255,210,77,.34)}100%{box-shadow:inset 0 0 0 9999px rgba(255,210,77,0)}}' +
             '.seu-scoreboard-row-changed{animation:seuScoreboardPulse 1.8s ease-out}' +
             '.seu-firstblood-stack{position:fixed;right:1rem;bottom:1rem;z-index:1080;display:flex;flex-direction:column;gap:.5rem;max-width:min(24rem,calc(100vw - 2rem))}' +
-            '.seu-firstblood-toast{background:#101820;color:#fff;border-left:4px solid #ffbf3c;border-radius:.25rem;box-shadow:0 .5rem 1.2rem rgba(0,0,0,.24);padding:.75rem .9rem;font-size:.95rem;line-height:1.35;opacity:0;transform:translateY(.75rem);transition:opacity .18s ease,transform .18s ease}' +
+            '.seu-firstblood-toast{position:relative;background:#101820;color:#fff;border-left:4px solid #ffbf3c;border-radius:.25rem;box-shadow:0 .5rem 1.2rem rgba(0,0,0,.24);padding:.75rem 2.1rem .75rem .9rem;font-size:.95rem;line-height:1.35;opacity:0;transform:translateY(.75rem);transition:opacity .18s ease,transform .18s ease}' +
             '.seu-firstblood-toast.is-visible{opacity:1;transform:translateY(0)}' +
             '.seu-firstblood-title{font-weight:700;margin-bottom:.15rem}' +
-            '.seu-firstblood-body{color:#f8f9fa}';
+            '.seu-firstblood-body{color:#f8f9fa}' +
+            '.seu-firstblood-close{position:absolute;top:.35rem;right:.45rem;border:0;background:transparent;color:#fff;font-size:1.1rem;line-height:1;cursor:pointer;opacity:.72}' +
+            '.seu-firstblood-close:hover,.seu-firstblood-close:focus{opacity:1}';
         documentNode.head.appendChild(style);
     }
 
@@ -236,22 +239,64 @@
         toast.className = 'seu-firstblood-toast';
         toast.innerHTML = '<div class="seu-firstblood-title">First Blood</div>' +
             '<div class="seu-firstblood-body">' + escapeHtml(entry.team) +
-            ' solved problem ' + escapeHtml(entry.problem) + ' first.</div>';
+            ' solved problem ' + escapeHtml(entry.problem) + ' first.</div>' +
+            '<button type="button" class="seu-firstblood-close" aria-label="Close first blood alert">&times;</button>';
         getToastStack(documentNode).appendChild(toast);
+
+        var closeButton = toast.querySelector('.seu-firstblood-close');
+        if (closeButton) {
+            closeButton.addEventListener('click', function () {
+                dismissToast(toast);
+            });
+        }
 
         root.setTimeout(function () {
             toast.classList.add('is-visible');
         }, 20);
-        root.setTimeout(function () {
-            toast.classList.remove('is-visible');
-            root.setTimeout(function () {
-                if (toast.parentNode) {
-                    toast.parentNode.removeChild(toast);
-                }
-            }, 220);
-        }, TOAST_LIFETIME_MS);
+        scheduleToastDismiss(toast, documentNode);
 
         maybeBrowserNotification(entry);
+    }
+
+    function dismissToast(toast) {
+        if (!toast || !toast.parentNode) {
+            return;
+        }
+
+        toast.classList.remove('is-visible');
+        root.setTimeout(function () {
+            if (toast.parentNode) {
+                toast.parentNode.removeChild(toast);
+            }
+        }, 220);
+    }
+
+    function getToastAutoDismissDelay(documentNode) {
+        if (documentNode && documentNode.hidden) {
+            return null;
+        }
+        return TOAST_LIFETIME_MS;
+    }
+
+    function scheduleToastDismiss(toast, documentNode) {
+        var delay = getToastAutoDismissDelay(documentNode);
+        if (delay !== null) {
+            root.setTimeout(function () {
+                dismissToast(toast);
+            }, delay);
+            return;
+        }
+
+        var onVisible = function () {
+            if (documentNode.hidden) {
+                return;
+            }
+            documentNode.removeEventListener('visibilitychange', onVisible);
+            root.setTimeout(function () {
+                dismissToast(toast);
+            }, TOAST_LIFETIME_MS);
+        };
+        documentNode.addEventListener('visibilitychange', onVisible);
     }
 
     function escapeHtml(value) {
@@ -282,6 +327,29 @@
         } catch (error) {
             // Browser notifications are optional; the in-page toast is the reliable path.
         }
+    }
+
+    function requestNotificationPermissionOnInteraction(documentNode) {
+        if (!documentNode || !root.Notification || notificationPromptBound) {
+            return;
+        }
+        if (root.Notification.permission !== 'default') {
+            return;
+        }
+
+        var requestPermission = function () {
+            documentNode.removeEventListener('click', requestPermission);
+            documentNode.removeEventListener('keydown', requestPermission);
+            try {
+                root.Notification.requestPermission();
+            } catch (error) {
+                // Some browsers require a different permission flow; in-page toasts remain available.
+            }
+        };
+
+        documentNode.addEventListener('click', requestPermission);
+        documentNode.addEventListener('keydown', requestPermission);
+        notificationPromptBound = true;
     }
 
     function afterRefresh() {
@@ -327,6 +395,7 @@
         initialized = true;
         config = config || {};
         state = createStorageState(root.localStorage, config.storageKey || DEFAULT_STORAGE_KEY);
+        requestNotificationPermissionOnInteraction(root.document);
         retuneRefresh(config);
         afterRefresh();
     }
@@ -338,6 +407,7 @@
         diffFirstSolves: diffFirstSolves,
         processSnapshot: processSnapshot,
         isAlertsClosed: isAlertsClosed,
+        getToastAutoDismissDelay: getToastAutoDismissDelay,
         extractFirstSolves: extractFirstSolves,
         snapshotRows: snapshotRows,
     };

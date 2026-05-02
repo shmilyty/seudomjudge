@@ -7,6 +7,8 @@ This deployment adds a small front-end enhancement on top of DOMjudge's built-in
 - Public and team scoreboards retune the native AJAX refresh interval to 15 seconds when refresh is enabled.
 - Existing first solves on page load are treated as the baseline and do not trigger alerts.
 - Newly appearing `score_first` cells trigger an in-page "First Blood" toast.
+- Toasts stay visible for 30 seconds, can be closed manually, and do not auto-dismiss while the page is hidden.
+- After the user interacts with the page, the script asks the browser for notification permission where supported.
 - Alerts are suppressed once the rendered scoreboard state says updates are frozen, stopped, preliminary, or final.
 - Rows whose solved count or penalty changes are briefly highlighted after an AJAX refresh.
 

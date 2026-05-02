@@ -56,3 +56,8 @@ test('isAlertsClosed recognizes the rendered DOMjudge state marker', () => {
 
   assert.equal(enhance.isAlertsClosed(root), true);
 });
+
+test('toast auto-dismiss is delayed while the page is hidden', () => {
+  assert.equal(enhance.getToastAutoDismissDelay({ hidden: true }), null);
+  assert.equal(enhance.getToastAutoDismissDelay({ hidden: false }), 30000);
+});
