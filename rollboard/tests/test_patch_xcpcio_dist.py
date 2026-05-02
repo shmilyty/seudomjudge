@@ -33,6 +33,24 @@ class PatchXcpcioDistTest(unittest.TestCase):
 
         self.assertEqual(once, twice)
 
+    def test_expands_resolver_hotkeys(self):
+        js = (
+            'bn([" "],v=>{v.preventDefault()}),'
+            'Ee(["n"," "],()=>{c.value.next()},{dedupe:!0}),'
+            'Ee(["r"],()=>{c.value.rewind()},{dedupe:!0}),'
+            'Ee(["w"],()=>{c.value.currentIndex--}),'
+            'Ee(["s"],()=>{c.value.currentIndex++});'
+        )
+
+        patched = patch_xcpcio_dist.patch_resolver_js(js)
+        twice = patch_xcpcio_dist.patch_resolver_js(patched)
+
+        self.assertIn('Ee(["n"," ","Enter","ArrowRight"],()=>{', patched)
+        self.assertIn('Ee(["r","ArrowLeft","Backspace"],()=>{', patched)
+        self.assertIn('Ee(["w","ArrowUp"],()=>{', patched)
+        self.assertIn('Ee(["s","ArrowDown"],()=>{', patched)
+        self.assertEqual(patched, twice)
+
 
 if __name__ == "__main__":
     unittest.main()

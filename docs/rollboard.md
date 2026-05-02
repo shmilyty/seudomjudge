@@ -51,8 +51,21 @@ rebuilding a host.
 
 The XCPCIO static dist is served from `/rollboard/`, so `index.html` and
 `404.html` must be patched with `window.BASE_URL="/rollboard/"` and
-`window.DATA_HOST="/"`. Run `rollboard/tools/patch_xcpcio_dist.py` after
+`window.DATA_HOST="/"`. The resolver JavaScript is also patched to add
+operator-friendly keys. Run `rollboard/tools/patch_xcpcio_dist.py` after
 refreshing the third-party dist.
+
+## Resolver Controls
+
+The resolver starts at the frozen scoreboard. The first forward action scrolls
+to the bottom; later forward actions move upward through teams and reveal a
+pending frozen cell when the selected team has one.
+
+```text
+Forward / reveal: n, Space, Enter, Right Arrow
+Rewind:           r, Left Arrow, Backspace
+Move selection:   w/s, Up Arrow/Down Arrow
+```
 
 ## Safety
 

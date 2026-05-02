@@ -15,6 +15,12 @@ DATA_HOST_PLACEHOLDER = (
     r"try\{let _=__DATA_HOST__;_=normalizePath\(_\),window\.DATA_HOST=_\}"
     r"catch\(_\)\{window\.DATA_HOST=\"/data/\"\}"
 )
+RESOLVER_HOTKEY_REPLACEMENTS = {
+    'Ee(["n"," "],()=>{': 'Ee(["n"," ","Enter","ArrowRight"],()=>{',
+    'Ee(["r"],()=>{': 'Ee(["r","ArrowLeft","Backspace"],()=>{',
+    'Ee(["w"],()=>{': 'Ee(["w","ArrowUp"],()=>{',
+    'Ee(["s"],()=>{': 'Ee(["s","ArrowDown"],()=>{',
+}
 
 
 def normalize_base_path(value: str) -> str:
@@ -71,9 +77,22 @@ def patch_html(html: str, base_path: str = "/rollboard/", data_host: str = "/") 
     return html
 
 
+def patch_resolver_js(js: str) -> str:
+    for old, new in RESOLVER_HOTKEY_REPLACEMENTS.items():
+        if new in js:
+            continue
+        if old not in js:
+            raise ValueError(f"could not find XCPCIO resolver hotkey marker: {old}")
+        js = js.replace(old, new, 1)
+    return js
+
+
 def patch_file(path: Path, base_path: str, data_host: str) -> bool:
     before = path.read_text(encoding="utf-8")
-    after = patch_html(before, base_path=base_path, data_host=data_host)
+    if path.suffix == ".js" and "Resolver-" in path.name:
+        after = patch_resolver_js(before)
+    else:
+        after = patch_html(before, base_path=base_path, data_host=data_host)
     if after == before:
         return False
     tmp_path = path.with_suffix(path.suffix + ".tmp")
@@ -84,7 +103,7 @@ def patch_file(path: Path, base_path: str, data_host: str) -> bool:
 
 def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Patch XCPCIO board dist HTML for SEU rollboard.")
-    parser.add_argument("html", nargs="+", type=Path, help="HTML files to patch, usually index.html and 404.html")
+    parser.add_argument("html", nargs="+", type=Path, help="HTML files to patch, plus optional Resolver*.js assets")
     parser.add_argument("--base-path", default="/rollboard/", help="Vue router base path")
     parser.add_argument("--data-host", default="/", help="XCPCIO data host prefix")
     return parser
