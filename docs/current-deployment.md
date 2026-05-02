@@ -1,6 +1,8 @@
 # Current Deployment Notes
 
-Snapshot date: 2026-05-01
+Snapshot date: 2026-05-02
+
+DOMjudge version: `9.0.0`
 
 ## Public Entry
 
@@ -40,12 +42,22 @@ Important live directories:
 Do not copy `mariadb/`, `secrets/`, `*.secret`, or `.env.local` files into this
 repository.
 
+The previous DOMjudge 7.3.0 domserver tree was kept on the live host for
+rollback after the 2026-05-02 upgrade.
+
 ## Containers
 
 ```text
 dj-mariadb
 dj-domserver
 dj-judgehost-0
+```
+
+Current DOMjudge images:
+
+```text
+domjudge/domserver:9.0.0
+domjudge/judgehost:9.0.0
 ```
 
 Docker network:

@@ -14,7 +14,7 @@ services:
       - /mnt/domjudge/domjudge-live/mariadb:/var/lib/mysql
 
   domserver:
-    image: domjudge/domserver:latest
+    image: domjudge/domserver:9.0.0
     container_name: dj-domserver
     restart: unless-stopped
     depends_on:
@@ -30,12 +30,16 @@ services:
       MYSQL_HOST: dj-mariadb
       MYSQL_DATABASE: domjudge
       MYSQL_USER: domjudge
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql_root_password
       DJ_DB_INSTALL_BARE: "0"
+      WEBAPP_BASEURL: /
     volumes:
+      - /mnt/domjudge/domjudge-live/secrets:/run/secrets:ro
       - /mnt/domjudge/domjudge-live/domserver:/opt/domjudge/domserver
 
   judgehost:
-    image: domjudge/judgehost:latest
+    image: domjudge/judgehost:9.0.0
     container_name: dj-judgehost-0
     restart: unless-stopped
     privileged: true
@@ -49,9 +53,13 @@ services:
       CONTAINER_TIMEZONE: Asia/Singapore
       DOMSERVER_BASEURL: http://dj-domserver/
       JUDGEDAEMON_USERNAME: judgehost
+      JUDGEDAEMON_PASSWORD_FILE: /run/secrets/judgehost_password
       DAEMON_ID: "0"
+      DOMJUDGE_CREATE_WRITABLE_TEMP_DIR: "0"
+      RUN_USER_UID_GID: "62860"
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
+      - /mnt/domjudge/domjudge-live/secrets:/run/secrets:ro
       - /mnt/domjudge/domjudge-live/judgehost/judgings:/opt/domjudge/judgehost/judgings
       - /mnt/domjudge/domjudge-live/judgehost/log:/opt/domjudge/judgehost/log
       - /mnt/domjudge/domjudge-live/judgehost/tmp:/opt/domjudge/judgehost/tmp

@@ -11,7 +11,8 @@ https://domjudge.seucpc.com/
 
 The live service is currently deployed with Docker on `Server-SEUCPC`. The
 public entrypoint is nginx, which terminates TLS and proxies to the DOMjudge
-domserver container on localhost port `12345`.
+domserver container on localhost port `12345`. The current DOMjudge version is
+`9.0.0`.
 
 ## What Is Included
 
