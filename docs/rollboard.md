@@ -31,6 +31,11 @@ It contains the Basic Auth password file and local environment file. The
 environment file points at DOMjudge's local API and a password file already
 present on the live host; it must not contain a pasted password value.
 
+The live `www/` directory uses the static `dist` from `@xcpcio/board-app`
+version `0.84.0`. The dist files are third-party build output and are not
+vendored into this public snapshot; reinstall or repack that npm package when
+rebuilding a host.
+
 ## Data Flow
 
 1. The admin page calls the localhost-only rollboard admin service through
