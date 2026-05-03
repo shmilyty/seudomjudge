@@ -17,6 +17,12 @@ class PublicTemplateTest(unittest.TestCase):
         self.assertIn('/print-station/', html)
         self.assertIn('print station', html)
 
+    def test_print_station_uses_separate_basic_auth_file(self):
+        config = Path(__file__).parents[1] / "nginx" / "rollboard.locations.conf"
+        text = config.read_text(encoding="utf-8")
+
+        self.assertIn("auth_basic_user_file /mnt/domjudge/rollboard/secrets/print-station.htpasswd;", text)
+
 
 if __name__ == "__main__":
     unittest.main()

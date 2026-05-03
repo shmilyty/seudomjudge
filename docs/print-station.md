@@ -8,8 +8,10 @@ them through a protected browser page:
 https://domjudge.seucpc.com/print-station/
 ```
 
-The page uses the same Basic Auth protection style as rollboard. It does not
-expose live submissions or queue contents in this public repository.
+The page uses the same Basic Auth protection style as rollboard, but it has a
+separate htpasswd file so the Print Station username can differ from the
+rollboard username. It does not expose live submissions or queue contents in
+this public repository.
 
 ## Normal Contest Flow
 
