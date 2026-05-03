@@ -79,6 +79,25 @@ The deployment runs four enabled judgehosts. This keeps judging parallelism
 well below the server's 16 hardware threads while removing the original
 single-judgehost bottleneck.
 
+## Printing
+
+DOMjudge's team and jury printing links are enabled through the `print_command`
+configuration value. The live command calls:
+
+```text
+/opt/domjudge/domserver/bin/seu-print-spool [file] [original] [language] [username] [teamname] [teamid] [location] 2>&1
+```
+
+The script stores print requests under:
+
+```text
+/mnt/domjudge/domjudge-live/domserver/var/print-spool/pending/
+```
+
+Each request contains `metadata.txt`, `source`, and `print.txt`. This is a safe
+server-side print queue; it does not embed any printer credentials. To send jobs
+to paper automatically, connect the queue to a chosen host CUPS printer.
+
 ## Certificates
 
 TLS certificates are issued by Let's Encrypt using DNS-01 validation. The live
