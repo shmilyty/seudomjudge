@@ -24,7 +24,7 @@ spool_root=${SEU_DOMJUDGE_PRINT_SPOOL:-/opt/domjudge/domserver/var/print-spool}
 pending_dir="$spool_root/pending"
 tmp_dir="$spool_root/.tmp"
 mkdir -p "$pending_dir" "$tmp_dir"
-chmod 2775 "$pending_dir" "$tmp_dir"
+chmod 2775 "$pending_dir" "$tmp_dir" 2>/dev/null || true
 
 safe_original=$(basename "${original:-print.txt}" | tr -c 'A-Za-z0-9._-' '_')
 safe_teamid=$(printf '%s' "${teamid:-team}" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40)

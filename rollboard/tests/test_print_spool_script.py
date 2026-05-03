@@ -39,6 +39,49 @@ class PrintSpoolScriptTest(unittest.TestCase):
                 self.assertTrue(file_mode & stat.S_IRGRP, name)
                 self.assertTrue(file_mode & stat.S_IWGRP, name)
 
+    def test_parent_directory_chmod_failure_does_not_block_queueing(self):
+        bash = shutil.which("bash")
+        real_chmod = shutil.which("chmod")
+        if bash is None or real_chmod is None:
+            self.skipTest("bash and chmod are required for the spool script test")
+        repo = Path(__file__).parents[2]
+        script = repo / "deploy" / "seu-print-spool.sh"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            fakebin = root / "fakebin"
+            fakebin.mkdir()
+            fake_chmod = fakebin / "chmod"
+            fake_chmod.write_text(
+                "\n".join(
+                    [
+                        "#!/usr/bin/env bash",
+                        'for arg in "$@"; do',
+                        '  case "$arg" in */pending|*/.tmp) echo "chmod denied" >&2; exit 1;; esac',
+                        "done",
+                        f'exec "{real_chmod}" "$@"',
+                        "",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            fake_chmod.chmod(0o755)
+            source = root / "main.cpp"
+            source.write_text("int main() { return 0; }\n", encoding="utf-8")
+            env = os.environ.copy()
+            env["PATH"] = f"{fakebin}{os.pathsep}{env['PATH']}"
+            env["SEU_DOMJUDGE_PRINT_SPOOL"] = str(root / "spool")
+
+            subprocess.run(
+                [bash, str(script), str(source), "main.cpp", "cpp", "dino", "Team Dino", "6", "lab"],
+                check=True,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+
+            self.assertEqual(len(list((root / "spool" / "pending").iterdir())), 1)
+
 
 if __name__ == "__main__":
     unittest.main()
