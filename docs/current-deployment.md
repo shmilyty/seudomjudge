@@ -82,11 +82,13 @@ single-judgehost bottleneck.
 ## Languages
 
 The live contest language table exposes C, C++, Java, and Python 3 to teams.
-Python 3 submissions use the DOMjudge `py3` compile script, which executes
-`python3` inside the judgehost chroot.
+Java uses OpenJDK 21 from the judgehost chroot. Python 3 submissions use the
+DOMjudge `py3` compile script, which executes `python3` inside the judgehost
+chroot.
 
-Each judgehost chroot therefore needs the Ubuntu `python3` package installed
-under `/chroot/domjudge`. If judgehost containers are recreated, rerun:
+Each judgehost chroot therefore needs the Ubuntu `python3` package installed,
+OpenJDK library paths in `ldconfig`, and a standard `1777` `/tmp` in each
+per-judging sandbox. If judgehost containers are recreated, rerun:
 
 ```bash
 deploy/enable-python3-chroot.sh
