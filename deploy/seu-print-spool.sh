@@ -21,12 +21,17 @@ fi
 
 spool_root=${SEU_DOMJUDGE_PRINT_SPOOL:-/opt/domjudge/domserver/var/print-spool}
 pending_dir="$spool_root/pending"
-mkdir -p "$pending_dir"
+tmp_dir="$spool_root/.tmp"
+mkdir -p "$pending_dir" "$tmp_dir"
 
 safe_original=$(basename "${original:-print.txt}" | tr -c 'A-Za-z0-9._-' '_')
+safe_teamid=$(printf '%s' "${teamid:-team}" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40)
+safe_username=$(printf '%s' "${username:-user}" | tr -c 'A-Za-z0-9._-' '_' | cut -c1-40)
+safe_teamid=${safe_teamid:-team}
+safe_username=${safe_username:-user}
 timestamp=$(date -u +%Y%m%dT%H%M%SZ)
-job_id="${timestamp}-${teamid:-team}-${username:-user}-$$"
-job_dir="$pending_dir/$job_id"
+job_id="${timestamp}-${safe_teamid}-${safe_username}-$$"
+job_dir="$tmp_dir/$job_id"
 mkdir "$job_dir"
 
 cp -- "$source_file" "$job_dir/source"
@@ -55,4 +60,5 @@ cp -- "$source_file" "$job_dir/source"
 
 ln -sfn "$safe_original" "$job_dir/original-name"
 
+mv "$job_dir" "$pending_dir/$job_id"
 echo "Queued DOMjudge print job: $job_id"

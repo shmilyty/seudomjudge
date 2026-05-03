@@ -95,8 +95,18 @@ The script stores print requests under:
 ```
 
 Each request contains `metadata.txt`, `source`, and `print.txt`. This is a safe
-server-side print queue; it does not embed any printer credentials. To send jobs
-to paper automatically, connect the queue to a chosen host CUPS printer.
+server-side print queue; it does not embed any printer credentials.
+
+Paper output is handled by the protected onsite Print Station page:
+
+```text
+https://domjudge.seucpc.com/print-station/
+```
+
+The Print Station runs in an admin laptop browser and sends jobs to that
+laptop's default printer. It supports auto mode, pause/resume, requeue, recent
+job reprint, and single-station locking. See `docs/print-station.md` for the
+operator flow.
 
 ## Certificates
 

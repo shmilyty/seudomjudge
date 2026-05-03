@@ -1,0 +1,646 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SEU Print Station</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f6f9;
+      --panel: #ffffff;
+      --ink: #172033;
+      --muted: #667085;
+      --line: #d8dee8;
+      --brand: #175cd3;
+      --brand-dark: #0b4cb8;
+      --warn-bg: #fff7d6;
+      --warn: #8a4b00;
+      --danger: #b42318;
+      --danger-bg: #fff0ed;
+      --ok: #067647;
+      --ok-bg: #ecfdf3;
+      --idle: #344054;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    main {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 24px auto;
+    }
+    header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 28px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      line-height: 1.3;
+      letter-spacing: 0;
+    }
+    .muted { color: var(--muted); }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 16px;
+      box-shadow: 0 6px 18px rgba(16, 24, 40, .05);
+    }
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .controls .wide { grid-column: 1 / -1; }
+    button, a.button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--brand);
+      border-radius: 6px;
+      background: var(--brand);
+      color: white;
+      font: inherit;
+      font-weight: 650;
+      text-decoration: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    button.secondary, a.button.secondary {
+      background: white;
+      color: var(--brand);
+    }
+    button.danger {
+      background: var(--danger);
+      border-color: var(--danger);
+    }
+    button.warn {
+      background: var(--warn);
+      border-color: var(--warn);
+    }
+    button:disabled {
+      cursor: not-allowed;
+      opacity: .55;
+    }
+    button:not(:disabled):hover, a.button:not(.is-disabled):hover {
+      background: var(--brand-dark);
+      border-color: var(--brand-dark);
+      color: white;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 26px;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 13px;
+      font-weight: 650;
+      background: #eef2f7;
+      color: var(--idle);
+    }
+    .badge.ok { background: var(--ok-bg); color: var(--ok); }
+    .badge.warn { background: var(--warn-bg); color: var(--warn); }
+    .badge.danger { background: var(--danger-bg); color: var(--danger); }
+    .counts {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+    .count {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+    .count strong {
+      display: block;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+    .current {
+      min-height: 126px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fbfcfe;
+    }
+    .job-title {
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+    .job-meta {
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      overflow-wrap: anywhere;
+    }
+    .notice {
+      display: none;
+      margin: 0 0 12px;
+      border-radius: 8px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      background: #fbfcfe;
+      color: var(--idle);
+      font-size: 14px;
+    }
+    .notice.is-visible { display: block; }
+    .notice.warn { border-color: #f2d478; background: var(--warn-bg); color: var(--warn); }
+    .notice.danger { border-color: #fecdca; background: var(--danger-bg); color: var(--danger); }
+    .sections {
+      display: grid;
+      gap: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 9px 8px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td.actions {
+      width: 260px;
+      text-align: right;
+    }
+    .row-actions {
+      display: inline-flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 6px;
+    }
+    .row-actions button {
+      min-height: 32px;
+      padding: 0 9px;
+      font-size: 13px;
+    }
+    .empty {
+      padding: 12px 8px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+    iframe#print-frame {
+      position: fixed;
+      right: 0;
+      bottom: 0;
+      width: 1px;
+      height: 1px;
+      border: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (max-width: 860px) {
+      header { display: block; }
+      .grid { grid-template-columns: 1fr; }
+      td.actions { width: auto; text-align: left; }
+      .row-actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>打印工作台</h1>
+      <div class="muted">SEU DOMjudge Print Station</div>
+    </div>
+    <a class="button secondary" href="/jury" target="_top">返回 DOMjudge</a>
+  </header>
+
+  <div id="notice" class="notice"></div>
+
+  <div class="grid">
+    <aside class="panel">
+      <h2>控制</h2>
+      <div>
+        <span id="auto-badge" class="badge">自动模式</span>
+        <span id="pause-badge" class="badge">状态未知</span>
+      </div>
+      <div class="controls">
+        <button id="auto-toggle" type="button">停止自动</button>
+        <button id="pause-toggle" class="warn" type="button">暂停打印</button>
+        <button id="next-button" class="secondary wide" type="button">处理下一份</button>
+      </div>
+      <div class="current">
+        <div class="muted">当前任务</div>
+        <div id="current-job" class="job-title">没有正在处理的任务</div>
+        <div id="current-meta" class="job-meta"></div>
+      </div>
+      <div class="counts">
+        <div class="count"><span class="muted">待打印</span><strong id="count-pending">0</strong></div>
+        <div class="count"><span class="muted">打印中</span><strong id="count-printing">0</strong></div>
+        <div class="count"><span class="muted">失败</span><strong id="count-failed">0</strong></div>
+        <div class="count"><span class="muted">近期完成</span><strong id="count-done">0</strong></div>
+      </div>
+      <p id="station-meta" class="job-meta"></p>
+    </aside>
+
+    <section class="sections">
+      <section class="panel">
+        <h2>待打印</h2>
+        <div id="pending"></div>
+      </section>
+      <section class="panel">
+        <h2>打印中</h2>
+        <div id="printing"></div>
+      </section>
+      <section class="panel">
+        <h2>失败 / 稍后处理</h2>
+        <div id="failed"></div>
+      </section>
+      <section class="panel">
+        <h2>近期完成</h2>
+        <div id="done"></div>
+      </section>
+    </section>
+  </div>
+</main>
+
+<iframe id="print-frame" title="print frame"></iframe>
+
+<script>
+  const API = '/print-station/api';
+  const POLL_MS = 2000;
+  const PRINT_DONE_TIMEOUT_MS = 8000;
+  const PRINT_SETTLE_MS = 1200;
+  const stationId = getStationId();
+  const state = {
+    auto: localStorage.getItem('seuPrintStationAuto') !== 'false',
+    paused: false,
+    blockedBy: '',
+    running: false,
+    currentJob: null,
+    jobs: { pending: [], printing: [], failed: [], done: [] },
+  };
+
+  const nodes = {
+    notice: document.getElementById('notice'),
+    autoBadge: document.getElementById('auto-badge'),
+    pauseBadge: document.getElementById('pause-badge'),
+    autoToggle: document.getElementById('auto-toggle'),
+    pauseToggle: document.getElementById('pause-toggle'),
+    nextButton: document.getElementById('next-button'),
+    currentJob: document.getElementById('current-job'),
+    currentMeta: document.getElementById('current-meta'),
+    stationMeta: document.getElementById('station-meta'),
+    frame: document.getElementById('print-frame'),
+    counts: {
+      pending: document.getElementById('count-pending'),
+      printing: document.getElementById('count-printing'),
+      failed: document.getElementById('count-failed'),
+      done: document.getElementById('count-done'),
+    },
+    lists: {
+      pending: document.getElementById('pending'),
+      printing: document.getElementById('printing'),
+      failed: document.getElementById('failed'),
+      done: document.getElementById('done'),
+    },
+  };
+
+  function getStationId() {
+    const existing = localStorage.getItem('seuPrintStationId');
+    if (existing) return existing;
+    const random = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const value = `station-${random}`.replace(/[^A-Za-z0-9_.-]/g, '-').slice(0, 120);
+    localStorage.setItem('seuPrintStationId', value);
+    return value;
+  }
+
+  async function api(path, options = {}) {
+    const response = await fetch(`${API}${path}`, {
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+    const text = await response.text();
+    const data = text ? JSON.parse(text) : {};
+    if (!response.ok || data.error) {
+      throw new Error(data.error || `HTTP ${response.status}`);
+    }
+    return data;
+  }
+
+  async function post(path, body = {}) {
+    return api(path, { method: 'POST', body: JSON.stringify(body) });
+  }
+
+  async function refresh() {
+    try {
+      const status = await api(`/status?station_id=${encodeURIComponent(stationId)}`);
+      state.paused = Boolean(status.paused);
+      state.blockedBy = status.station && !status.station.allowed ? status.station.active_station : '';
+      const jobs = await api('/jobs');
+      state.jobs = {
+        pending: jobs.pending || [],
+        printing: jobs.printing || [],
+        failed: jobs.failed || [],
+        done: jobs.done || [],
+      };
+      render(status.counts || jobs.counts || {});
+      maybeAutoPrint();
+    } catch (error) {
+      showNotice(error.message, 'danger');
+    }
+  }
+
+  function render(counts) {
+    nodes.autoBadge.textContent = state.auto ? '自动模式' : '手动模式';
+    nodes.autoBadge.className = `badge ${state.auto ? 'ok' : ''}`;
+    nodes.pauseBadge.textContent = state.paused ? '已暂停' : '可打印';
+    nodes.pauseBadge.className = `badge ${state.paused ? 'warn' : 'ok'}`;
+    nodes.autoToggle.textContent = state.auto ? '停止自动' : '开启自动';
+    nodes.pauseToggle.textContent = state.paused ? '恢复打印' : '暂停打印';
+    nodes.pauseToggle.className = state.paused ? '' : 'warn';
+    nodes.pauseToggle.disabled = false;
+    nodes.autoToggle.disabled = false;
+    nodes.nextButton.disabled = Boolean(state.blockedBy) || state.running;
+
+    for (const key of ['pending', 'printing', 'failed', 'done']) {
+      nodes.counts[key].textContent = String(counts[key] ?? state.jobs[key].length);
+      nodes.lists[key].innerHTML = renderJobTable(key, state.jobs[key]);
+    }
+
+    if (state.currentJob) {
+      nodes.currentJob.textContent = jobTitle(state.currentJob);
+      nodes.currentMeta.textContent = jobMeta(state.currentJob);
+    } else {
+      nodes.currentJob.textContent = '没有正在处理的任务';
+      nodes.currentMeta.textContent = '';
+    }
+
+    nodes.stationMeta.textContent = `station_id: ${stationId}`;
+    if (state.blockedBy) {
+      showNotice(`另一个打印工作台正在活动：${state.blockedBy}。当前页面不会自动领取任务。`, 'warn');
+    } else if (state.paused) {
+      showNotice('打印已暂停。选手打印请求仍会进入队列。', 'warn');
+    } else {
+      showNotice('', '');
+    }
+  }
+
+  function renderJobTable(stateName, jobs) {
+    if (!jobs.length) {
+      return '<div class="empty">暂无任务</div>';
+    }
+    const rows = jobs.map((job) => `
+      <tr>
+        <td>
+          <div class="job-title">${escapeHtml(jobTitle(job))}</div>
+          <div class="job-meta">${escapeHtml(jobMeta(job))}</div>
+        </td>
+        <td>${escapeHtml(formatDate(job.created_at))}</td>
+        <td class="actions"><span class="row-actions">${renderActions(stateName, job)}</span></td>
+      </tr>
+    `).join('');
+    return `
+      <table>
+        <thead><tr><th>任务</th><th>时间</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  function renderActions(stateName, job) {
+    const id = escapeHtml(job.id);
+    if (stateName === 'pending') {
+      return '<span class="muted">等待处理</span>';
+    }
+    if (stateName === 'printing') {
+      return [
+        `<button class="secondary" data-action="manual-print" data-id="${id}">重打</button>`,
+        `<button data-action="done" data-id="${id}">完成</button>`,
+        `<button class="danger" data-action="fail" data-id="${id}">失败</button>`,
+        job.stale ? `<button class="secondary" data-action="requeue" data-id="${id}">重排</button>` : '',
+      ].join('');
+    }
+    if (stateName === 'failed') {
+      return `<button class="secondary" data-action="requeue" data-id="${id}">重排</button>`;
+    }
+    return `<button class="secondary" data-action="requeue" data-id="${id}">重打</button>`;
+  }
+
+  async function maybeAutoPrint() {
+    if (!state.auto || state.paused || state.blockedBy || state.running) return;
+    state.running = true;
+    try {
+      const claimed = await post('/jobs/claim', { station_id: stationId });
+      if (claimed.blocked_by) {
+        state.blockedBy = claimed.blocked_by;
+        return;
+      }
+      if (!claimed.job) return;
+      state.currentJob = claimed.job;
+      render({});
+      await completePrintFlow(claimed.job);
+      state.currentJob = null;
+      await refresh();
+    } catch (error) {
+      showNotice(error.message, 'danger');
+    } finally {
+      state.running = false;
+    }
+  }
+
+  async function printJob(job) {
+    const response = await fetch(`${API}/jobs/${encodeURIComponent(job.id)}/print`, { credentials: 'same-origin' });
+    if (!response.ok) {
+      throw new Error(`无法读取打印内容：HTTP ${response.status}`);
+    }
+    const text = await response.text();
+    return printText(text, job);
+  }
+
+  async function completePrintFlow(job) {
+    await printJob(job);
+    await sleep(PRINT_SETTLE_MS);
+    await post(`/jobs/${encodeURIComponent(job.id)}/done`, { station_id: stationId });
+  }
+
+  function printText(text, job) {
+    return new Promise((resolve) => {
+      const doc = nodes.frame.contentWindow.document;
+      doc.open();
+      doc.write(`<!doctype html>
+        <html><head><title>${escapeHtml(jobTitle(job))}</title>
+        <style>
+          body { margin: 16mm; font-family: "Consolas", "Courier New", monospace; font-size: 11pt; }
+          .meta { font-family: Arial, sans-serif; font-size: 10pt; margin-bottom: 10px; border-bottom: 1px solid #999; padding-bottom: 6px; }
+          pre { white-space: pre-wrap; word-break: break-word; }
+        </style></head>
+        <body>
+          <div class="meta">${escapeHtml(jobTitle(job))}<br>${escapeHtml(jobMeta(job))}</div>
+          <pre>${escapeHtml(text)}</pre>
+        </body></html>`);
+      doc.close();
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        resolve();
+      };
+      nodes.frame.contentWindow.onafterprint = finish;
+      window.setTimeout(finish, PRINT_DONE_TIMEOUT_MS);
+      nodes.frame.contentWindow.focus();
+      nodes.frame.contentWindow.print();
+    });
+  }
+
+  function jobTitle(job) {
+    const team = job.teamname || job.username || job.teamid || 'unknown team';
+    const original = job.original || 'source';
+    return `${team} / ${original}`;
+  }
+
+  function jobMeta(job) {
+    const parts = [];
+    if (job.language) parts.push(job.language);
+    if (job.username) parts.push(`user ${job.username}`);
+    if (job.location) parts.push(job.location);
+    if (job.attempts) parts.push(`attempt ${job.attempts}`);
+    if (job.reason) parts.push(job.reason);
+    if (job.stale) parts.push('stale');
+    return parts.join(' · ');
+  }
+
+  function showNotice(text, kind) {
+    nodes.notice.textContent = text;
+    nodes.notice.className = `notice ${kind || ''} ${text ? 'is-visible' : ''}`;
+  }
+
+  function formatDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('zh-CN', { hour12: false });
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    }[ch]));
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+  }
+
+  nodes.autoToggle.addEventListener('click', () => {
+    state.auto = !state.auto;
+    localStorage.setItem('seuPrintStationAuto', String(state.auto));
+    render({});
+    maybeAutoPrint();
+  });
+
+  nodes.pauseToggle.addEventListener('click', async () => {
+    nodes.pauseToggle.disabled = true;
+    try {
+      await post(state.paused ? '/resume' : '/pause');
+      await refresh();
+    } catch (error) {
+      showNotice(error.message, 'danger');
+    } finally {
+      nodes.pauseToggle.disabled = false;
+    }
+  });
+
+  nodes.nextButton.addEventListener('click', async () => {
+    nodes.nextButton.disabled = true;
+    state.running = true;
+    try {
+      const claimed = await post('/jobs/claim', { station_id: stationId });
+      if (claimed.blocked_by) {
+        showNotice(`另一个打印工作台正在活动：${claimed.blocked_by}`, 'warn');
+      } else if (!claimed.job) {
+        showNotice(state.paused ? '打印已暂停。' : '没有待打印任务。', state.paused ? 'warn' : '');
+      } else {
+        state.currentJob = claimed.job;
+        render({});
+        await completePrintFlow(claimed.job);
+        state.currentJob = null;
+      }
+      await refresh();
+    } catch (error) {
+      showNotice(error.message, 'danger');
+    } finally {
+      state.running = false;
+      nodes.nextButton.disabled = false;
+    }
+  });
+
+  document.body.addEventListener('click', async (event) => {
+    const button = event.target.closest('button[data-action]');
+    if (!button) return;
+    const action = button.getAttribute('data-action');
+    const id = button.getAttribute('data-id');
+    button.disabled = true;
+    try {
+      if (action === 'manual-print') {
+        await printJob(findJob(id) || { id, original: id });
+      } else if (action === 'done') {
+        await post(`/jobs/${encodeURIComponent(id)}/done`, { station_id: stationId });
+      } else if (action === 'fail') {
+        const reason = window.prompt('失败原因', 'printer issue') || '';
+        await post(`/jobs/${encodeURIComponent(id)}/fail`, { station_id: stationId, reason });
+      } else if (action === 'requeue') {
+        await post(`/jobs/${encodeURIComponent(id)}/requeue`, {});
+      }
+      await refresh();
+    } catch (error) {
+      showNotice(error.message, 'danger');
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  function findJob(id) {
+    for (const jobs of Object.values(state.jobs)) {
+      const job = jobs.find((item) => item.id === id);
+      if (job) return job;
+    }
+    return null;
+  }
+
+  refresh();
+  window.setInterval(refresh, POLL_MS);
+</script>
+</body>
+</html>
