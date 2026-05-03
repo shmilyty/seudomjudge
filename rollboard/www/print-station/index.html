@@ -172,6 +172,25 @@
     .notice.is-visible { display: block; }
     .notice.warn { border-color: #f2d478; background: var(--warn-bg); color: var(--warn); }
     .notice.danger { border-color: #fecdca; background: var(--danger-bg); color: var(--danger); }
+    .operator-notes {
+      margin: 0 0 16px;
+      border: 1px solid #f2d478;
+      border-radius: 8px;
+      background: var(--warn-bg);
+      color: var(--warn);
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .operator-notes strong {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--ink);
+    }
+    .operator-notes ul {
+      margin: 0;
+      padding-left: 20px;
+    }
     .sections {
       display: grid;
       gap: 14px;
@@ -242,6 +261,17 @@
   </header>
 
   <div id="notice" class="notice"></div>
+
+  <section class="operator-notes" aria-label="打印注意事项">
+    <strong>现场注意事项</strong>
+    <ul>
+      <li>比赛时只在一台现场笔记本打开本页面；其他 admin 窗口不会处理打印队列。</li>
+      <li>打印前请确认本机默认打印机正确，推荐使用 Chrome/Edge kiosk printing 模式。</li>
+      <li>卡纸、换墨、断线或临时维护时，先点击“暂停打印”。</li>
+      <li>暂停期间选手打印请求仍会排队，恢复后会继续处理。</li>
+      <li>完成表示已交给本机打印系统，不保证纸张已经物理输出；缺页时可在近期完成中重打。</li>
+    </ul>
+  </section>
 
   <div class="grid">
     <aside class="panel">

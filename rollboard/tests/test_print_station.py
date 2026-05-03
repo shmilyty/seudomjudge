@@ -99,5 +99,22 @@ class PrintQueueStoreTest(unittest.TestCase):
         self.assertEqual(listing["done"][0]["id"], "job-1")
 
 
+class PrintStationPageTest(unittest.TestCase):
+    def test_print_station_page_contains_operator_notes(self):
+        page = next(
+            candidate
+            for candidate in (
+                Path(__file__).parents[1] / "www" / "print-station" / "index.html",
+                Path(__file__).parents[2] / "www" / "print-station" / "index.html",
+            )
+            if candidate.is_file()
+        )
+        html = page.read_text(encoding="utf-8")
+
+        self.assertIn("比赛时只在一台现场笔记本打开本页面", html)
+        self.assertIn("暂停期间选手打印请求仍会排队", html)
+        self.assertIn("完成表示已交给本机打印系统", html)
+
+
 if __name__ == "__main__":
     unittest.main()
