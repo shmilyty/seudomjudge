@@ -1,3 +1,27 @@
+x-judgehost-common: &judgehost-common
+  image: domjudge/judgehost:9.0.0
+  restart: unless-stopped
+  privileged: true
+  depends_on:
+    - domserver
+  networks:
+    - dj-net
+  env_file:
+    - ./env.example
+  environment: &judgehost-environment
+    CONTAINER_TIMEZONE: Asia/Singapore
+    DOMSERVER_BASEURL: http://dj-domserver/
+    JUDGEDAEMON_USERNAME: judgehost
+    JUDGEDAEMON_PASSWORD_FILE: /run/secrets/judgehost_password
+    DOMJUDGE_CREATE_WRITABLE_TEMP_DIR: "0"
+    RUN_USER_UID_GID: "62860"
+  volumes:
+    - /sys/fs/cgroup:/sys/fs/cgroup:rw
+    - /mnt/domjudge/domjudge-live/secrets:/run/secrets:ro
+    - /mnt/domjudge/domjudge-live/judgehost/judgings:/opt/domjudge/judgehost/judgings
+    - /mnt/domjudge/domjudge-live/judgehost/log:/opt/domjudge/judgehost/log
+    - /mnt/domjudge/domjudge-live/judgehost/tmp:/opt/domjudge/judgehost/tmp
+
 services:
   mariadb:
     image: mariadb:latest
@@ -38,31 +62,37 @@ services:
       - /mnt/domjudge/domjudge-live/secrets:/run/secrets:ro
       - /mnt/domjudge/domjudge-live/domserver:/opt/domjudge/domserver
 
-  judgehost:
-    image: domjudge/judgehost:9.0.0
+  judgehost-0:
+    <<: *judgehost-common
     container_name: dj-judgehost-0
-    restart: unless-stopped
-    privileged: true
-    depends_on:
-      - domserver
-    networks:
-      - dj-net
-    env_file:
-      - ./env.example
+    hostname: dj-judgehost-0
     environment:
-      CONTAINER_TIMEZONE: Asia/Singapore
-      DOMSERVER_BASEURL: http://dj-domserver/
-      JUDGEDAEMON_USERNAME: judgehost
-      JUDGEDAEMON_PASSWORD_FILE: /run/secrets/judgehost_password
+      <<: *judgehost-environment
       DAEMON_ID: "0"
-      DOMJUDGE_CREATE_WRITABLE_TEMP_DIR: "0"
-      RUN_USER_UID_GID: "62860"
-    volumes:
-      - /sys/fs/cgroup:/sys/fs/cgroup:rw
-      - /mnt/domjudge/domjudge-live/secrets:/run/secrets:ro
-      - /mnt/domjudge/domjudge-live/judgehost/judgings:/opt/domjudge/judgehost/judgings
-      - /mnt/domjudge/domjudge-live/judgehost/log:/opt/domjudge/judgehost/log
-      - /mnt/domjudge/domjudge-live/judgehost/tmp:/opt/domjudge/judgehost/tmp
+
+  judgehost-1:
+    <<: *judgehost-common
+    container_name: dj-judgehost-1
+    hostname: dj-judgehost-1
+    environment:
+      <<: *judgehost-environment
+      DAEMON_ID: "1"
+
+  judgehost-2:
+    <<: *judgehost-common
+    container_name: dj-judgehost-2
+    hostname: dj-judgehost-2
+    environment:
+      <<: *judgehost-environment
+      DAEMON_ID: "2"
+
+  judgehost-3:
+    <<: *judgehost-common
+    container_name: dj-judgehost-3
+    hostname: dj-judgehost-3
+    environment:
+      <<: *judgehost-environment
+      DAEMON_ID: "3"
 
 networks:
   dj-net:

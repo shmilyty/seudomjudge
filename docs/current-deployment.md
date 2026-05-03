@@ -1,6 +1,6 @@
 # Current Deployment Notes
 
-Snapshot date: 2026-05-02
+Snapshot date: 2026-05-03
 
 DOMjudge version: `9.0.0`
 
@@ -51,6 +51,9 @@ rollback after the 2026-05-02 upgrade.
 dj-mariadb
 dj-domserver
 dj-judgehost-0
+dj-judgehost-1
+dj-judgehost-2
+dj-judgehost-3
 ```
 
 Current DOMjudge images:
@@ -71,6 +74,10 @@ The domserver publishes:
 ```text
 127.0.0.1:12345 -> container port 80
 ```
+
+The deployment runs four enabled judgehosts. This keeps judging parallelism
+well below the server's 16 hardware threads while removing the original
+single-judgehost bottleneck.
 
 ## Certificates
 
