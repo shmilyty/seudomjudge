@@ -46,6 +46,11 @@ The Print Station keeps queue states under the live spool root:
 /mnt/domjudge/domjudge-live/domserver/var/print-spool/
 ```
 
+The DOMjudge spool writer creates job directories as `www-data`. The
+`rollboard-admin` service must run with `SupplementaryGroups=www-data`, and
+spooled jobs must be group-readable and group-writable so the Print Station can
+claim jobs and write queue state files.
+
 Operators can:
 
 - Pause automatic printing.

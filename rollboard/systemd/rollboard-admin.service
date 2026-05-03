@@ -6,6 +6,7 @@ After=network.target docker.service
 Type=simple
 User=seucpc
 Group=seucpc
+SupplementaryGroups=www-data
 WorkingDirectory=/mnt/domjudge/rollboard
 EnvironmentFile=/mnt/domjudge/rollboard/secrets/rollboard-admin.env
 ExecStart=/usr/bin/python3 -m rollboard.service.rollboard_admin_server

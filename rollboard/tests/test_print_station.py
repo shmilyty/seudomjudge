@@ -1,3 +1,4 @@
+import os
 import tempfile
 import time
 import unittest
@@ -47,6 +48,16 @@ class PrintQueueStoreTest(unittest.TestCase):
         self.assertEqual(job["id"], "job-1")
         self.assertFalse(first.exists())
         self.assertTrue((self.spool / "printing" / "job-1").exists())
+
+    def test_queue_directories_are_group_writable(self):
+        if os.name == "nt":
+            self.skipTest("setgid directory mode is POSIX-specific")
+        store = PrintQueueStore(self.spool)
+
+        for name in ("pending", "printing", "failed", "done", "control"):
+            mode = (self.spool / name).stat().st_mode
+            self.assertTrue(mode & 0o2000, name)
+            self.assertTrue(mode & 0o020, name)
 
     def test_pause_blocks_claiming_but_keeps_pending_jobs(self):
         write_job(self.spool / "pending" / "job-1", "queued")

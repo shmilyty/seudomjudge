@@ -23,6 +23,12 @@ class PublicTemplateTest(unittest.TestCase):
 
         self.assertIn("auth_basic_user_file /mnt/domjudge/rollboard/secrets/print-station.htpasswd;", text)
 
+    def test_rollboard_admin_service_can_write_www_data_jobs(self):
+        service = Path(__file__).parents[1] / "systemd" / "rollboard-admin.service"
+        text = service.read_text(encoding="utf-8")
+
+        self.assertIn("SupplementaryGroups=www-data", text)
+
 
 if __name__ == "__main__":
     unittest.main()

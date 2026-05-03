@@ -40,8 +40,8 @@ class PrintQueueStore:
 
     def ensure_dirs(self) -> None:
         for state in QUEUE_STATES:
-            (self.root / state).mkdir(parents=True, exist_ok=True)
-        (self.root / "control").mkdir(parents=True, exist_ok=True)
+            ensure_group_queue_dir(self.root / state)
+        ensure_group_queue_dir(self.root / "control")
 
     def is_paused(self) -> bool:
         return self.pause_file.exists()
@@ -321,3 +321,8 @@ def parse_iso_timestamp(value: str) -> Optional[float]:
         return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp()
     except ValueError:
         return None
+
+
+def ensure_group_queue_dir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=True)
+    path.chmod(path.stat().st_mode | 0o2775)
