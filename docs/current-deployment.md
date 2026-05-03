@@ -79,6 +79,22 @@ The deployment runs four enabled judgehosts. This keeps judging parallelism
 well below the server's 16 hardware threads while removing the original
 single-judgehost bottleneck.
 
+## Languages
+
+The live contest language table exposes C, C++, Java, and Python 3 to teams.
+Python 3 submissions use the DOMjudge `py3` compile script, which executes
+`python3` inside the judgehost chroot.
+
+Each judgehost chroot therefore needs the Ubuntu `python3` package installed
+under `/chroot/domjudge`. If judgehost containers are recreated, rerun:
+
+```bash
+deploy/enable-python3-chroot.sh
+```
+
+The same script also sets the DOMjudge Python 3 compiler and runner version
+commands to `python3 --version`.
+
 ## Printing
 
 DOMjudge's team and jury printing links are enabled through the `print_command`
