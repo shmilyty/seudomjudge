@@ -29,7 +29,11 @@ files for the selected contest, then opens the XCPCIO resolver view.
 The `secrets/` directory is intentionally excluded from the public repository.
 It contains the Basic Auth password file and local environment file. The
 environment file points at DOMjudge's local API and a password file already
-present on the live host; it must not contain a pasted password value.
+present on the live host; it must not contain a pasted password value. The
+rollboard service should use a dedicated DOMjudge API user such as
+`rollboard-api` with only the `api_reader` role, not the interactive `admin`
+account. Keep that API password in a private file such as
+`/mnt/domjudge/rollboard/secrets/rollboard-api-password.secret`.
 
 The live `www/` directory uses the static `dist` from `@xcpcio/board-app`
 version `0.84.0`. The dist files are third-party build output and are not
@@ -72,6 +76,7 @@ Move selection:   w/s, Up Arrow/Down Arrow
 - `/rollboard/`, `/rollboard/admin/`, `/rollboard/data/`, and `/rollboard/api/`
   are protected by nginx Basic Auth.
 - The admin API binds to `127.0.0.1` only.
+- DOMjudge API access uses a dedicated read-only API account.
 - Live contest data generated under `www/data/` is not committed.
 - API credentials, htpasswd files, passwords, and generated data are not
   committed.
